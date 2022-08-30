@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">FirstComposeActivity</string>
+    <string name="title_test_dfm">Dynamic Module</string>
+</resources>
