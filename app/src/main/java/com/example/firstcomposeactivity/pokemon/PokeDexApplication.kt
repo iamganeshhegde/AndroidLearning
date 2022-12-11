@@ -3,13 +3,15 @@ package com.example.firstcomposeactivity.pokemon
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Context
 import android.os.Build
+import com.example.firstcomposeactivity.agora.GlobalSettings
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
 @HiltAndroidApp
 class PokeDexApplication : Application() {
+
+    private var globalSettings: GlobalSettings? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -42,4 +44,6 @@ class PokeDexApplication : Application() {
 
 
     }
+
+
 }
