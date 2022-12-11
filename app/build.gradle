@@ -21,6 +21,12 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
+        configurations.all {
+            resolutionStrategy {
+                force 'androidx.core:core-ktx:1.7.0'
+                force 'androidx.annotation:annotation:1.2.0'
+            }
+        }
     }
 
     buildTypes {
@@ -172,7 +178,12 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:4.10.0")
 
     //agora
-    implementation 'io.agora.rtc:full-sdk:3.5.0'
+    implementation 'io.agora.rtc:full-sdk:4.0.1'
+    implementation "io.agora.rtc:full-screen-sharing:4.0.1"
+
+
+    implementation "org.orbit-mvi:orbit-core:4.2.0"
+    implementation "org.orbit-mvi:orbit-viewmodel:4.2.0"
 
 
 }

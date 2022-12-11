@@ -1,80 +1,99 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
-
-    <FrameLayout
-        android:id="@+id/local_video_view_container"
+    android:fitsSystemWindows="true">
+    <LinearLayout
+        android:id="@+id/video_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@android:color/white"
-        android:layout_above="@+id/channel1"/>
-
-    <FrameLayout
-        android:id="@+id/remote_video_view_container"
-        android:layout_width="160dp"
-        android:layout_height="160dp"
+        android:layout_height="360dp"
         android:layout_alignParentTop="true"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:id="@+id/fl_camera"
+            android:layout_width="0dp"
+            android:layout_weight="0.5"
+            android:layout_height="match_parent"/>
+
+        <FrameLayout
+            android:id="@+id/fl_screenshare"
+            android:layout_width="0dp"
+            android:layout_weight="0.5"
+            android:layout_height="match_parent" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_join"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/et_channel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_join"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Join" />
+
+    </LinearLayout>
+
+
+
+    <LinearLayout
+        android:id="@+id/ll_screen_volume"
+        android:layout_above="@+id/ll_join"
+        android:layout_width="match_parent"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        android:layout_height="wrap_content">
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Screen Capture Volumn"/>
+
+
+        <SeekBar
+            android:id="@+id/screen_audio_volume"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:progress="50"
+            android:max="100"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+    <Switch
+        android:id="@+id/screen_audio"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/ll_screen_volume"
+        android:layout_marginBottom="16dp"
+        android:paddingHorizontal="16dp"
+        android:checked="true"
+        android:text="Screen share audio" />
+
+    <Switch
+        android:id="@+id/screen_preview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/screen_audio"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
-        android:background="@android:color/darker_gray" />
+        android:layout_marginHorizontal="16dp"
+        android:checked="true"
+        android:layout_marginBottom="16dp"
+        android:text="Screen share preview" />
 
-    <EditText
-        android:id="@+id/channel1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/channel2"
-        android:layout_centerHorizontal="true"
-        android:text="ganesh"/>
-
-    <EditText
-        android:id="@+id/channel2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/joinChannel"
-        android:layout_centerHorizontal="true"
-        android:text="hegde"/>
-
-    <Button
-        android:id="@+id/joinChannel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="10dp"
-        android:text="Join as Audience 1"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"/>
-
-    <Button
-        android:id="@+id/role"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Role change"
-        android:textSize="10dp"
-        android:layout_alignParentBottom="true"
-        android:layout_toRightOf="@+id/joinChannel"/>
-
-    <Button
-        android:id="@+id/joinAnotherChannel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Join audience 2"
-        android:textSize="10dp"
-        android:layout_alignParentBottom="true"
-        android:layout_toLeftOf="@+id/joinChannel"/>
-
-    <Button
-        android:id="@+id/relay"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="relay"
-        android:textSize="10dp"
-        android:layout_alignParentBottom="true"
-        android:layout_toLeftOf="@+id/joinAnotherChannel"/>
 
 </RelativeLayout>
