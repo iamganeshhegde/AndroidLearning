@@ -15,19 +15,39 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringDef
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.animateOffset
 import androidx.compose.animation.core.animateOffsetAsState
+import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.with
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +57,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -44,11 +65,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
 import androidx.compose.material.ProgressIndicatorDefaults
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -61,13 +84,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.Dimension
@@ -80,11 +110,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -93,7 +121,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.select
 import java.util.*
-import kotlin.math.roundToInt
 
 
 class MainActivity : ComponentActivity() {
@@ -107,6 +134,7 @@ class MainActivity : ComponentActivity() {
         activity.windowManager.defaultDisplay.getRealMetrics(displayMetrics)
         return displayMetrics.heightPixels - (rectangle.top + rectangle.height())
     }
+
     @SuppressLint("ResourceType", "InternalInsetResource")
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -115,19 +143,22 @@ class MainActivity : ComponentActivity() {
 
         val resources: Resources = this.resources
         val resourceId: Int = resources.getIdentifier("navigation_bar_height", "dimen", "android")
-       if (resourceId > 0) {
+        if (resourceId > 0) {
             resources.getDimensionPixelSize(resourceId)
-           Log.d("Ganesh",
-               "resources.getDimensionPixelSize(resourceId) ${resources.getDimensionPixelSize(resourceId)}"
-           )
+            Log.d(
+                "Ganesh",
+                "resources.getDimensionPixelSize(resourceId) ${resources.getDimensionPixelSize(resourceId)}"
+            )
         } else {
-           Log.d("Ganesh",
-               "resources.getDimensionPixelSize(resourceId) - 0"
-           )
-       }
+            Log.d(
+                "Ganesh",
+                "resources.getDimensionPixelSize(resourceId) - 0"
+            )
+        }
 
 
-        Log.d("Ganesh",
+        Log.d(
+            "Ganesh",
             "resources.getDimensionPixelSize(resourceId) activity - ${getNavigationBarHeight(this)}"
         )
 
@@ -136,9 +167,10 @@ class MainActivity : ComponentActivity() {
         this.navigationBarHeight
 
 
-        Log.d("Ganesh",
+        Log.d(
+            "Ganesh",
             "nav bar ${this.navigationBarHeight}"
-    )
+        )
 
 
         val bar = this.navigationBarHeight
@@ -146,7 +178,8 @@ class MainActivity : ComponentActivity() {
 
 
 
-        Log.d("Ganesh",
+        Log.d(
+            "Ganesh",
             "bar to dp  - ${bar.toFloat().convertPxToDp(this)}"
         )
 
@@ -359,8 +392,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                val xOffset by animateOffsetAsState(targetValue = Offset(targetOffset.x.toFloat(),
-                    targetOffset.y.toFloat())) {
+                val xOffset by animateOffsetAsState(
+                    targetValue = Offset(
+                        targetOffset.x.toFloat(),
+                        targetOffset.y.toFloat()
+                    )
+                ) {
                     IntOffset(100, 200)
                 }
 
@@ -754,8 +791,6 @@ THis is for displaying movement if image
                 }*/
 
 
-
-
                 /*Column(Modifier) {
                     Spacer(modifier = Modifier.padding(top = 300.dp))
                     ParticipantsStrip(modifier = Modifier)
@@ -764,6 +799,9 @@ THis is for displaying movement if image
 
 
 //                TranslatingObjects()
+
+                /* animation using path
+
 
                 val scope = rememberCoroutineScope()
 
@@ -845,13 +883,353 @@ THis is for displaying movement if image
                         ) {
                             Text(text = "Start Animation \uD83E\uDD2A")
                         }
-                    }
+                    }*/
+
+
+                var shouldShowTimer by remember {
+                    mutableStateOf(true)
                 }
+
+
+                LaunchedEffect(key1 = shouldShowTimer) {
+                    delay(4000L)
+                    shouldShowTimer = shouldShowTimer.not()
+                }
+
+                Column {
+
+                    Text(
+                        text = "Title"
+                    )
+
+                    Spacer(modifier = Modifier.height(40.dp))
+
+                    AnimatedContent(
+                        modifier = Modifier.background(Color.White.copy(alpha = 0.5f)),
+                        targetState = shouldShowTimer,
+                        transitionSpec = {
+                            (slideInVertically() + fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = 800,
+                                    easing = LinearEasing
+                                )
+                            ) with
+                                    slideOutVertically() + fadeOut(
+                                animationSpec = tween(
+                                    durationMillis = 800,
+                                    easing = LinearEasing
+                                )
+                            ))
+                                .using(
+                                    SizeTransform(clip = true)
+                                )
+                        }
+                    ) {
+                        Text(
+                            text = "Hegde",
+                            color = Color.Green
+                        )
+                    }
+
+
+                    AnimatedContent(
+                        modifier = Modifier.background(Color.White.copy(alpha = 0.5f)),
+                        targetState = shouldShowTimer,
+                        transitionSpec = {
+                            (slideInVertically() + fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = 800,
+                                    easing = LinearEasing
+                                )
+                            ) with
+                                    slideOutVertically() + fadeOut(
+                                animationSpec = tween(
+                                    durationMillis = 800,
+                                    easing = LinearEasing
+                                )
+                            ))
+                                .using(
+                                    SizeTransform(clip = true)
+                                )
+                        }
+                    ) {
+                        Text(
+                            text = "Ganesh",
+                            color = Color.Red
+                        )
+                    }
+
+
+
+                    val infiniteTransition = rememberInfiniteTransition()
+                    val color by infiniteTransition.animateColor(
+                        initialValue = Color.Red,
+                        targetValue = Color.Green,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1000, easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse
+                        )
+                    )
+
+                    Box(
+                        Modifier
+                            .size(100.dp)
+                            .background(color))
+
+
+
+
+                    var newSelected by remember {
+                        mutableStateOf(true)
+                    }
+// Animates changes when `selected` is changed.
+
+                    val transition = updateTransition(newSelected, label = "selected state")
+                    val borderColor by transition.animateColor(label = "border color") { isSelected ->
+                        if (isSelected) Color.Magenta else Color.White
+                    }
+
+
+
+
+                    var boxTransition by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(key1 = boxTransition) {
+                        delay(4000L)
+                        shouldShowTimer = boxTransition.not()
+                    }
+
+
+                    Column(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .clickable { newSelected = !newSelected }
+                        .border(BorderStroke(2.dp, borderColor)),) {
+                        Text(text = "Hello, world!")
+                        // AnimatedVisibility as a part of the transition.
+                        transition.AnimatedVisibility(
+                            visible = { targetSelected -> targetSelected },
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            Text(text = "It is fine today.")
+                        }
+                        // AnimatedContent as a part of the transition.
+                        transition.AnimatedContent { targetState ->
+                            if (targetState) {
+                                Text(text = "Selected")
+                            } else {
+                                Icon(imageVector = Icons.Default.Phone, contentDescription = "Phone")
+                            }
+                        }
+                    }
+
+
+
+
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+
+                    val multiplier by remember {
+                        mutableStateOf(10)
+                    }
+
+                    var countState by remember {
+                        mutableStateOf(CountAnimation.NONE)
+                    }
+
+                    val lowerLimit = (multiplier - 10).coerceAtLeast(1)
+
+
+                    val multipliers by animateIntAsState(
+                        targetValue = if (countState == CountAnimation.NONE) {
+                            lowerLimit
+                        } else {
+                            multiplier
+                        },
+                        animationSpec = TweenSpec(
+                            durationMillis = (multiplier - lowerLimit).coerceAtLeast(0) * 800,
+                            easing = LinearEasing
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        countState = CountAnimation.START
+                    }
+
+                    /*AnimatedContent(
+                        targetState = multipliers,
+                        transitionSpec = {*//*
+                            infiniteRepeatable<Float>(
+                                animation = tween(durationMillis = 800, 4200),
+                                repeatMode = RepeatMode.Restart
+                            ) + slideInVertically(initialOffsetY = { height -> height }) + fadeIn()*//*
+                            if (targetState > initialState) {
+                                slideInVertically(initialOffsetY = { height -> height }) + fadeIn() with
+                                        slideOutVertically(targetOffsetY = { height -> -height }) + fadeOut()
+                            } else {
+                                slideInVertically(initialOffsetY = { height -> -height }) + fadeIn() with
+                                        slideOutVertically(targetOffsetY = { height -> height }) + fadeOut()
+                            }.using(
+                                SizeTransform(clip = false)
+                            )
+                        }
+                    ) { targetCount ->
+                        Text(text = "$targetCount + 100", color = Color.White,  style = TextStyle.Default.copy(fontSize = 30.sp))
+                    }*/
+
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+
+
+
+                    /*var changeStringText by remember {
+                        mutableStateOf(true)
+                    }
+
+                    AnimatedContent(
+                        targetState = multipliers,
+                        transitionSpec = {
+                            if (targetState > initialState) {
+                                slideInVertically(initialOffsetY = { height -> height }) + fadeIn() with
+                                        slideOutVertically(targetOffsetY = { height -> -height }) + fadeOut()
+                            } else {
+                                slideInVertically(initialOffsetY = { height -> -height }) + fadeIn() with
+                                        slideOutVertically(targetOffsetY = { height -> height }) + fadeOut()
+                            }.using(
+                                SizeTransform(clip = false)
+                            )
+                        }
+                    ) { targetCount ->
+                        Text(text = "$targetCount", color = Color.White,  style = TextStyle.Default.copy(fontSize = 30.sp))
+                    }*/
+
+
+
+                    var displayAccording by remember {
+                        mutableStateOf(true)
+                    }
+
+
+
+                    LaunchedEffect(key1 = displayAccording) {
+                        delay(4200)
+                        displayAccording = displayAccording.not()
+//                        delay(800)
+                    }
+
+
+                    Box {
+                        BoxAnimation(displayAccording.not(), text = "Hegde")
+                        BoxAnimation(displayAccording, text = "Ganesh")
+                    }
+
+                    val radialAnimation = remember { Animatable(0f) }
+                    val density = LocalDensity.current
+
+                    LaunchedEffect(Unit) {
+                        delay(1000)
+                        radialAnimation.animateTo(
+                            1f,
+                            animationSpec = tween(durationMillis = 300, easing = LinearEasing)
+                        )
+                    }
+
+                    val startPoint = IntOffset(
+                        x = with(density) { (600?.minus(69.dp.roundToPx())) ?: 0 },
+                        y = with(density) { (600?.minus(69.dp.roundToPx())) ?: 0 }
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        val blackLight = Color.Black.copy(alpha = 0.2f)
+                        val blackDark = Color.Black.copy(alpha = 0.9f)
+                        Canvas(
+                            modifier = Modifier
+                                .size(178.dp)
+                                .offset {
+                                    IntOffset(
+                                        startPoint.x,
+                                        startPoint.y
+                                    )
+                                }
+                        ) {
+                            val centerX = size.width / 2
+                            val centerY = size.height / 2
+                            val radius = 89.dp.toPx()
+                            val cutoutRadius = 40.dp.toPx()
+
+                            // Draw the outer circle with a gradient
+                            val gradientShader = Brush.radialGradient(
+                                colors = listOf(
+                                    blackLight,
+                                    blackDark
+                                )
+                            )
+
+                            with(drawContext.canvas.nativeCanvas) {
+                                val checkPoint = saveLayer(null, null)
+                                drawCircle(
+                                    brush = gradientShader,
+                                    center = Offset(centerX, centerY),
+                                    radius = radius * radialAnimation.value
+                                )
+                                // Draw the cutout inner circle
+                                /*drawCircle(
+                                    brush = SolidColor(Color.Black.copy(alpha = 0.9f)),
+                                    center = Offset(centerX, centerY),
+                                    radius = cutoutRadius * radialAnimation.value
+                                )*/
+                                drawArc(
+                                    brush = SolidColor(Color.Transparent),
+                                    startAngle = 0f,
+                                    sweepAngle = 360f,
+                                    useCenter = true,
+                                    topLeft = Offset(centerX - cutoutRadius, centerY - cutoutRadius),
+                                    size = Size(cutoutRadius * 2, cutoutRadius * 2),
+                                    blendMode = BlendMode.SrcIn
+                                )
+                                restoreToCount(checkPoint)
+                            }
+                        }
+                    }
+
+
+
+                }
+
+
+
+
             }
         }
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun BoxAnimation(shouldShowWithText: Boolean, text: String) {
+    Box() {
+        AnimatedVisibility(
+            visible = shouldShowWithText,
+            enter =  slideInVertically(initialOffsetY = { height -> height }, animationSpec = TweenSpec(durationMillis = 800)) + fadeIn(animationSpec = tween(800)),
+            exit = slideOutVertically(targetOffsetY = { height -> -height }, animationSpec = TweenSpec(durationMillis = 800)) + fadeOut( animationSpec = tween(800))
+        ) {
+
+            Text(text = text, color = Color.White,  style = TextStyle.Default.copy(fontSize = 30.sp))
+
+        }
+    }
+
+}
+
+enum class CountAnimation {
+    NONE,
+    START
+}
 
 fun getQuadrantCenterOffset(
     broadcasterPosition: Int,
@@ -1050,22 +1428,28 @@ fun getAbsoluteOffsetFromScreen(
         1 -> {
             var targetOffsetinRoot =
                 IntOffset((screenWidth / 2).toInt(), (screenHeight / 2).toInt())
-            return IntOffset((targetOffsetinRoot.x - currentOffset.x),
-                (targetOffsetinRoot.y - currentOffset.y))
+            return IntOffset(
+                (targetOffsetinRoot.x - currentOffset.x),
+                (targetOffsetinRoot.y - currentOffset.y)
+            )
         }
         2 -> {
             when (broadcasterPosition) {
                 0 -> {
                     var targetOffsetinRoot =
                         IntOffset((screenWidth / 2).toInt(), (screenHeight / 4).toInt())
-                    return IntOffset((targetOffsetinRoot.x - currentOffset.x),
-                        (targetOffsetinRoot.y - currentOffset.y))
+                    return IntOffset(
+                        (targetOffsetinRoot.x - currentOffset.x),
+                        (targetOffsetinRoot.y - currentOffset.y)
+                    )
                 }
                 1 -> {
                     var targetOffsetinRoot =
                         IntOffset((screenWidth / 2).toInt(), 3 * (screenHeight / 4).toInt())
-                    return IntOffset((targetOffsetinRoot.x - currentOffset.x),
-                        (targetOffsetinRoot.y - currentOffset.y))
+                    return IntOffset(
+                        (targetOffsetinRoot.x - currentOffset.x),
+                        (targetOffsetinRoot.y - currentOffset.y)
+                    )
                 }
                 else -> {
                     IntOffset(-1, -1)
@@ -1077,21 +1461,27 @@ fun getAbsoluteOffsetFromScreen(
                 0 -> {
                     var targetOffsetinRoot =
                         IntOffset((screenWidth / 2).toInt(), (screenHeight / 4).toInt())
-                    return IntOffset((targetOffsetinRoot.x - currentOffset.x),
-                        (targetOffsetinRoot.y - currentOffset.y))
+                    return IntOffset(
+                        (targetOffsetinRoot.x - currentOffset.x),
+                        (targetOffsetinRoot.y - currentOffset.y)
+                    )
 
                 }
                 1 -> {
                     var targetOffsetinRoot =
                         IntOffset((screenWidth / 4).toInt(), 3 * (screenHeight / 4).toInt())
-                    return IntOffset((targetOffsetinRoot.x - currentOffset.x),
-                        (targetOffsetinRoot.y - currentOffset.y))
+                    return IntOffset(
+                        (targetOffsetinRoot.x - currentOffset.x),
+                        (targetOffsetinRoot.y - currentOffset.y)
+                    )
                 }
                 2 -> {
                     var targetOffsetinRoot =
                         IntOffset(3 * (screenWidth / 4).toInt(), 3 * (screenHeight / 4).toInt())
-                    return IntOffset((targetOffsetinRoot.x - currentOffset.x),
-                        (targetOffsetinRoot.y - currentOffset.y))
+                    return IntOffset(
+                        (targetOffsetinRoot.x - currentOffset.x),
+                        (targetOffsetinRoot.y - currentOffset.y)
+                    )
                 }
                 else -> {
                     IntOffset(-1, -1)
@@ -1103,29 +1493,37 @@ fun getAbsoluteOffsetFromScreen(
                 0 -> {
                     var targetOffsetinRoot =
                         IntOffset((screenWidth / 4).toInt(), (screenHeight / 4).toInt())
-                    return IntOffset((targetOffsetinRoot.x - currentOffset.x),
-                        (targetOffsetinRoot.y - currentOffset.y))
+                    return IntOffset(
+                        (targetOffsetinRoot.x - currentOffset.x),
+                        (targetOffsetinRoot.y - currentOffset.y)
+                    )
 
                 }
                 1 -> {
                     var targetOffsetinRoot =
                         IntOffset(3 * (screenWidth / 4).toInt(), (screenHeight / 4).toInt())
-                    return IntOffset((targetOffsetinRoot.x - currentOffset.x),
-                        (targetOffsetinRoot.y - currentOffset.y))
+                    return IntOffset(
+                        (targetOffsetinRoot.x - currentOffset.x),
+                        (targetOffsetinRoot.y - currentOffset.y)
+                    )
 
                 }
                 2 -> {
                     var targetOffsetinRoot =
                         IntOffset((screenWidth / 4).toInt(), 3 * (screenHeight / 4).toInt())
-                    return IntOffset((targetOffsetinRoot.x - currentOffset.x),
-                        (targetOffsetinRoot.y - currentOffset.y))
+                    return IntOffset(
+                        (targetOffsetinRoot.x - currentOffset.x),
+                        (targetOffsetinRoot.y - currentOffset.y)
+                    )
 
                 }
                 3 -> {
                     var targetOffsetinRoot =
                         IntOffset(3 * (screenWidth / 4).toInt(), 3 * (screenHeight / 4).toInt())
-                    return IntOffset((targetOffsetinRoot.x - currentOffset.x),
-                        (targetOffsetinRoot.y - currentOffset.y))
+                    return IntOffset(
+                        (targetOffsetinRoot.x - currentOffset.x),
+                        (targetOffsetinRoot.y - currentOffset.y)
+                    )
                 }
                 else -> {
                     IntOffset(-1, -1)
@@ -1173,7 +1571,7 @@ annotation class ParticipantGiftAnimationStates {
 fun ParticipantsStrip(
     modifier: Modifier = Modifier,
 ) {
-    val list = listOf<Int>(1, 2, 3, 4,5,6,7,8,9,10)
+    val list = listOf<Int>(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
 
     ConstraintLayout(
@@ -1214,7 +1612,7 @@ fun ParticipantsStrip(
             }
         },
 
-    ) {
+        ) {
 
 
         ScrollableList(
@@ -1257,7 +1655,7 @@ fun ParticipantsStrip(
 
         LaunchedEffect(key1 = Unit) {
             Log.d("Ganesh", "${scrollState.firstVisibleItemIndex}")
-            if(scrollState.firstVisibleItemScrollOffset == 1) {
+            if (scrollState.firstVisibleItemScrollOffset == 1) {
 
                 Log.d("Ganesh", "${scrollState.firstVisibleItemScrollOffset}")
                 scope.launch {
@@ -1279,8 +1677,8 @@ fun ParticipantsStrip(
                 itemsIndexed(list, key = { index, item -> index }) { index, item ->
 
 
-                    ImageNew(index, item) {selectedIndex ->
-                        if(selectedIndex == 4) {
+                    ImageNew(index, item) { selectedIndex ->
+                        if (selectedIndex == 4) {
                             scope.launch {
                                 listState.animateScrollBy(3000f, animationSpec = tween(500))
 //                                listState.animateScrollToItem(list.size-1)
@@ -1327,24 +1725,24 @@ fun ScrollableList(modifier: Modifier = Modifier) {
             }
 
 
-         /*   Box(
-                Modifier.focusable(
+            /*   Box(
+                   Modifier.focusable(
 
-                )
-            )
-            onFocused = { focused ->
-                scope.launch {
-                    if (focused) {
-                        val visibleItemsInfo = scrollState.layoutInfo.visibleItemsInfo
-                        val visibleSet = visibleItemsInfo.map { it.index }.toSet()
-                        if (index == visibleItemsInfo.last().index) {
-                            scrollState.scrollToItem(index)
-                        } else if (visibleSet.contains(index) && index != 0) {
-                            scrollState.scrollToItem(index - 1)
-                        }
-                    }
-                }
-            })*/
+                   )
+               )
+               onFocused = { focused ->
+                   scope.launch {
+                       if (focused) {
+                           val visibleItemsInfo = scrollState.layoutInfo.visibleItemsInfo
+                           val visibleSet = visibleItemsInfo.map { it.index }.toSet()
+                           if (index == visibleItemsInfo.last().index) {
+                               scrollState.scrollToItem(index)
+                           } else if (visibleSet.contains(index) && index != 0) {
+                               scrollState.scrollToItem(index - 1)
+                           }
+                       }
+                   }
+               })*/
         }
     }
 }
@@ -1392,9 +1790,12 @@ fun SelectedParticipant(
 
     Box(/*modifier = modifier.clickable {
         selectedIndex = selectedIndex.not()
-    }*/) {
-        Image(painter = rememberImagePainter(
-            data = R.drawable.ic_baseline_person_24),
+    }*/
+    ) {
+        Image(
+            painter = rememberImagePainter(
+                data = R.drawable.ic_baseline_person_24
+            ),
             contentDescription = "person",
             modifier = Modifier.size(40.dp)
         )
@@ -1454,8 +1855,8 @@ fun Float.convertPxToDp(context: Context): Float {
 
 
 //fun main() = runBlocking {
-    /*val template = listOf("4", "3"r, "1", "2")
-    val list = mutableListOf(Pair("3", "C"), Pair("1", "A"), Pair("4", "D")*//*, Pair("2", "B")*//*)
+/*val template = listOf("4", "3"r, "1", "2")
+val list = mutableListOf(Pair("3", "C"), Pair("1", "A"), Pair("4", "D")*//*, Pair("2", "B")*//*)
     print(template)
     print(list)
 
@@ -1505,25 +1906,25 @@ fun Float.convertPxToDp(context: Context): Float {
 
 */
 
-    /*val channel = Channel<Int>()
-    launch {
-        repeat(5) { index ->
-            delay(1000)
-            println("Producing next one")
-            channel.send(index * 2)
+/*val channel = Channel<Int>()
+launch {
+    repeat(5) { index ->
+        delay(1000)
+        println("Producing next one")
+        channel.send(index * 2)
+    }
+    channel.close()
+}
+
+
+launch {
+
+        for (element in channel) {
+            println("received - $element")
         }
-        channel.close()
-    }
+}
 
-
-    launch {
-
-            for (element in channel) {
-                println("received - $element")
-            }
-    }
-
-    *//*GlobalScope.launch {
+*//*GlobalScope.launch {
         receiver()
     }*//*
 
@@ -1557,11 +1958,11 @@ fun Float.convertPxToDp(context: Context): Float {
     }*/
 
 
-    /*val channel = produceNumbers()
-    repeat(3) { id ->
-        delay(10)
-        launchProcessor(id, channel)
-    }*/
+/*val channel = produceNumbers()
+repeat(3) { id ->
+    delay(10)
+    launchProcessor(id, channel)
+}*/
 
 /*
 
@@ -1577,11 +1978,9 @@ fun Float.convertPxToDp(context: Context): Float {
 //    println()
 
 
-
-
 //}
 
-fun main() = runBlocking{
+fun main() = runBlocking {
 
 
     val list = asyncStringsList()
@@ -1609,8 +2008,6 @@ fun main() = runBlocking{
 */
 
 
-
-
 /*
     val a = produce<String> {
         repeat(4) { send("Hello $it") }
@@ -1623,12 +2020,12 @@ fun main() = runBlocking{
     }
     coroutineContext.cancelChildren()*/
 
-   /* val fizz = fizz()
-    val buzz = buzz()
-    repeat(17) {
-        selectFizzBuzz(fizz, buzz)
-    }
-    coroutineContext.cancelChildren() // cancel fizz & buzz coroutines*/
+    /* val fizz = fizz()
+     val buzz = buzz()
+     repeat(17) {
+         selectFizzBuzz(fizz, buzz)
+     }
+     coroutineContext.cancelChildren() // cancel fizz & buzz coroutines*/
 }
 
 
@@ -1641,6 +2038,7 @@ fun CoroutineScope.asyncString(time: Int) = async {
     delay(time.toLong())
     "Waited for $time ms"
 }
+
 fun CoroutineScope.produceNumbers(side: SendChannel<Int>) = produce<Int> {
     for (num in 1..10) { // produce 10 numbers from 1 to 10
         delay(100) // every 100 ms
@@ -1678,7 +2076,7 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
 
 suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<String>) {
     select<Unit> {
-        fizz.onReceive {value ->
+        fizz.onReceive { value ->
             println("fizz -> '$value'")
         }
 
@@ -1687,6 +2085,7 @@ suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<St
         }
     }
 }
+
 fun CoroutineScope.fizz() = produce<String> {
     while (true) { // sends "Fizz" every 300 ms
         delay(300)
@@ -1701,10 +2100,11 @@ fun CoroutineScope.buzz() = produce<String> {
         send("Buzz")
     }
 }
+
 suspend fun sendString(
     channel: SendChannel<String>,
     text: String,
-    time: Long
+    time: Long,
 ) {
     while (true) {
         delay(time)
@@ -1721,22 +2121,22 @@ fun CoroutineScope.produceNumbers() = produce {
 
 fun CoroutineScope.launchProcessor(
     id: Int,
-    channel: ReceiveChannel<Int>
+    channel: ReceiveChannel<Int>,
 ) = launch {
-    delay(id*1000L)
+    delay(id * 1000L)
     for (msg in channel) {
         println("#$id received $msg")
     }
 }
 
 fun CoroutineScope.produceNumbers(
-    max: Int
+    max: Int,
 ): ReceiveChannel<Int> = produce {
     var x = 0
     while (x < 5) send(x++)
 }
 
-suspend fun receiver() = coroutineScope{
+suspend fun receiver() = coroutineScope {
     val channel = Channel<Int>()
     launch {
         repeat(5) { index ->
@@ -1759,6 +2159,7 @@ fun data1() = GlobalScope.async {
     delay(5000)
     "Hello"
 }
+
 fun data2() = GlobalScope.async {
     delay(2000)
     "World"

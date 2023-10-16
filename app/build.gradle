@@ -167,7 +167,7 @@ dependencies {
     implementation "com.google.android.exoplayer:exoplayer-ui:2.14.0"
 
     /*Moshi*/
-    def moshiVersion = "1.12.0"
+    def moshiVersion = "1.13.0"
     implementation("com.squareup.moshi:moshi:$moshiVersion")
     kapt("com.squareup.moshi:moshi-kotlin-codegen:$moshiVersion")
     implementation("com.squareup.retrofit2:converter-moshi:2.9.0")

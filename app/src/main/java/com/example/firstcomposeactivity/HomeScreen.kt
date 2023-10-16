@@ -20,9 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.paddingFrom
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -316,16 +314,6 @@ fun FeatureSection(features: List<Feature>) {
             style = MaterialTheme.typography.subtitle2
         )
 
-        LazyVerticalGrid(
-            cells = GridCells.Fixed(2),
-            contentPadding = PaddingValues(start = 7.5.dp, end = 7.5.dp, bottom = 100.dp),
-            modifier = Modifier.fillMaxHeight()
-        ) {
-            items(features.size) {
-
-                FeatureItem(feature = features[it])
-            }
-        }
     }
 }
 
